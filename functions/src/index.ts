@@ -4,13 +4,16 @@ import { firestore } from 'firebase-admin';
 
 const client = new firestore.v1.FirestoreAdminClient();
 
-exports.backupDatabaseFunction = functions.pubsub.schedule('every 5 minutes').onRun(async () => {
-    const projectId = (process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT) || "XXXX";
+exports.backupDatabaseFunction = functions.pubsub.schedule('every 2 minutes').onRun(async () => {
+    const projectId = (process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT) || "";
     const databaseName = client.databasePath(projectId, '(default)');
+    const timestamp = new Date().toISOString();
+    const bucketPath = `gs://${projectId}.appspot.com/backup/${timestamp}`;
+
     return client
         .exportDocuments({
             name: databaseName,
-            outputUriPrefix: `gs://${projectId}-backup`,
+            outputUriPrefix: bucketPath,
             collectionIds: [],
         })
         .then(responses => {
